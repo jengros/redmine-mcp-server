@@ -61,41 +61,12 @@ MCP 연결에서 `command`는 `node`, `args`는 빌드한 `dist/server.mjs`의 �
 실제 인증키·서버 정보는 저장소에 넣지 않습니다.
 GitHub에서 소스만 받은 상태로 `npx github:...`를 실행하는 방식은 지원하지 않습니다. 먼저 위 명령으로 빌드합니다.
 
-## npm 배포: GitHub Actions OIDC
-
-npm 11.15.0 이상에서 로그인 후 다음 명령으로 신뢰 연결을 등록하고 조회할 수 있습니다.
-계정 2FA와 패키지 쓰기 권한이 필요합니다.
-
-```sh
-npm trust github @jengros/redmine-mcp-server --file=publish.yml --repo=jengros/redmine-mcp-server --allow-publish --yes
-npm trust list @jengros/redmine-mcp-server
-```
-
-웹에서 등록하려면 npm 패키지 Settings → Trusted Publisher에 다음 값을 사용합니다.
-
-- Provider: GitHub Actions
-- Organization or user: jengros
-- Repository: redmine-mcp-server
-- Workflow filename: publish.yml
-- Environment name: 비워 둠
-- Allowed actions: npm publish 허용
-
-장기 npm 토큰이나 NODE_AUTH_TOKEN을 GitHub Secrets에 등록하지 않습니다.
-패키지가 아직 없으면 최초 등록을 완료한 뒤 패키지 설정에서 신뢰 관계를 등록합니다.
-공식 절차: https://docs.npmjs.com/trusted-publishers/
-
-package.json 버전과 같은 v태그(예: v1.3.2)를 올리면 배포합니다.
-워크플로는 저장소·태그·패키지 이름을 검사하고 고정된 의존성을 설치한 뒤 빌드와 테스트를 통과해야 배포합니다.
-GitHub 호스팅 Ubuntu, Node 22, npm 11.17.0과 id-token: write 권한을 사용합니다.
-수동 재실행도 해당 버전 태그를 선택해야 합니다. main에서 실행하면 배포 작업을 건너뜁니다.
-이미 배포한 버전은 덮어쓸 수 없으므로 신규 버전과 태그를 사용합니다.
-
 ## 유지보수와 검증
 
 - `origin`: 이 개인 저장소, `upstream`: 원본 저장소로 관리합니다.
 - API 변경은 `redmine-openapi.yaml`에서 수정합니다. `src/__generated__`와 `dist`는 빌드 결과이므로 직접 관리하지 않습니다.
 - 원본 변경을 가져올 때 스키마·커스텀 핸들러·빌드 스크립트의 차이를 보존하고 빌드/테스트 후 반영합니다.
-- CI는 Windows와 Linux에서 빌드 및 테스트합니다. npm은 버전 태그를 통해 OIDC로 배포합니다.
+- CI는 Windows와 Linux에서 빌드 및 테스트합니다.
 - 테스트는 빌드된 MCP와 로컬 모의 HTTP 서버 사이에서 수행하며 실제 Redmine/인증키를 사용하지 않습니다.
 - 단일 PUT, 댓글 전용 호출, 최소 시간 입력, 잘못된 입력, HTTP 오류, 응답 유실, 읽기 전용/도구 필터를 검증합니다.
 - 실제 Redmine 서버에서의 통합 저장과 조회 검증은 별도로 필요합니다.
