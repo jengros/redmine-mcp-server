@@ -39,11 +39,11 @@ HTTP 오류는 MCP 오류로 반환하며 응답 유실 시 쓰기를 자동 재
 배포된 버전은 다음 명령으로 실행합니다.
 
 ```sh
-npx -y @jengros/redmine-mcp-server@1.3.2
+npx -y @jengros/redmine-mcp-server
 ```
 
-MCP 설정은 command를 npx, args를 ["-y", "@jengros/redmine-mcp-server@1.3.2"]로 지정합니다.
-기존 환경 변수와 인증정보는 유지합니다. 버전을 고정하며 업데이트 시 검증한 버전으로 변경합니다.
+MCP 설정은 command를 npx, args를 ["-y", "@jengros/redmine-mcp-server"]로 지정합니다.
+기존 환경 변수와 인증정보는 유지합니다. 버전 생략 시 npm의 latest 태그를 사용하며, 실행 중인 MCP는 업데이트 후 재시작합니다.
 
 ## 이 수정본 빌드 및 실행
 
@@ -59,7 +59,6 @@ npm test
 MCP 연결에서 `command`는 `node`, `args`는 빌드한 `dist/server.mjs`의 절대 경로로 지정합니다.
 기존 환경 변수 `REDMINE_URL`, `REDMINE_API_KEY`와 읽기/쓰기 설정은 유지합니다.
 실제 인증키·서버 정보는 저장소에 넣지 않습니다.
-아래 원본 README의 `npx @onozaty/...` 명령은 원본 패키지를 실행하므로 이 수정본의 변경은 포함하지 않습니다.
 GitHub에서 소스만 받은 상태로 `npx github:...`를 실행하는 방식은 지원하지 않습니다. 먼저 위 명령으로 빌드합니다.
 
 ## npm 배포: GitHub Actions OIDC
@@ -101,294 +100,35 @@ GitHub 호스팅 Ubuntu, Node 22, npm 11.17.0과 id-token: write 권한을 사�
 - 단일 PUT, 댓글 전용 호출, 최소 시간 입력, 잘못된 입력, HTTP 오류, 응답 유실, 읽기 전용/도구 필터를 검증합니다.
 - 실제 Redmine 서버에서의 통합 저장과 조회 검증은 별도로 필요합니다.
 
----
+## 환경 변수
 
-아래는 원본 프로젝트 설명입니다.
-
-# Redmine MCP Server
-
-Model Context Protocol (MCP) server for Redmine that provides comprehensive access to the Redmine REST API.
-
-## Overview
-
-This project is an MCP server that comprehensively covers Redmine's [REST API](https://www.redmine.org/projects/redmine/wiki/rest_api). It allows you to operate Redmine from MCP clients (such as Claude Desktop).
-
-## Demonstration
-
-Here are example videos showing how to use the Redmine MCP server with Claude Desktop:
-
-### Creating an Issue
-
-https://github.com/user-attachments/assets/075fb079-104c-404d-91f5-755b3882853b
-
-*This demonstration also uses the [Playwright MCP](https://github.com/microsoft/playwright-mcp) for browser automation alongside the Redmine MCP server.*
-
-### Getting Issue Information
-
-https://github.com/user-attachments/assets/8f551082-6982-4513-8fe7-b0f111be982d
-
-## Features
-
-- 📋 **Comprehensive API Coverage**: Supports all functions available in Redmine's REST API
-- 🔒 **Read-Only Mode**: Supports safe data reference mode
-- 🔧 **Tool Filtering**: Control which tools are available using regex patterns
-- 🏷️ **Tool Annotations**: Declares `readOnlyHint` so clients can tell read operations from write ones
-
-## Prerequisites
-
-### Getting Redmine API Key
-
-1. Log in to Redmine with administrator privileges
-2. Go to "Administration" → "Settings" → "API" tab
-3. Check "Enable REST web service"
-4. Generate "API access key" in personal settings
-
-For details, refer to [Redmine REST API documentation](https://www.redmine.org/projects/redmine/wiki/rest_api#Authentication).
-
-## Configuration
-
-### Environment Variables
-
-The following environment variables are required (specified in MCP client configuration files):
-
-- **REDMINE_URL** (Required): Base URL of the Redmine instance
-  - Example: `https://redmine.example.com`
-- **REDMINE_API_KEY** (Required): API key generated in Redmine
-  - Set the API key obtained in prerequisites
-- **REDMINE_MCP_READ_ONLY** (Optional): Enable read-only mode
-  - `true`: Read-only mode (disables data modification operations)
-  - `false` or unset: Allow all operations (default)
-- **REDMINE_MCP_TOOLS_ALLOW_PATTERN** (Optional): Regex pattern to allow only matching tools
-  - Example: `^get` (enable only tools starting with "get")
-  - If unset, all tools are allowed (subject to other settings)
-- **REDMINE_MCP_TOOLS_DENY_PATTERN** (Optional): Regex pattern to disable matching tools
-  - Example: `^delete` (disable all tools starting with "delete")
-  - If unset, no tools are denied (subject to other settings)
-  - Deny pattern takes priority over allow pattern
-
-### MCP Client Configuration
-
-#### Using npx (Recommended for quick start)
-
-Add the following as MCP configuration for your AI agent:
-
-```json
-{
-  "mcpServers": {
-    "redmine": {
-      "command": "npx",
-      "args": ["-y", "@onozaty/redmine-mcp-server"],
-      "env": {
-        "REDMINE_URL": "https://your-redmine.example.com",
-        "REDMINE_API_KEY": "your-api-key-here",
-        "REDMINE_MCP_READ_ONLY": "true"
-      }
-    }
-  }
-}
-```
-
-#### Using Docker (Alternative)
-
-If you prefer using Docker:
-
-```json
-{
-  "mcpServers": {
-    "redmine": {
-      "command": "docker",
-      "args": [
-        "run", "--rm", "-i",
-        "-e", "REDMINE_URL=https://your-redmine.example.com",
-        "-e", "REDMINE_API_KEY=your-api-key-here",
-        "-e", "REDMINE_MCP_READ_ONLY=true",
-        "ghcr.io/onozaty/redmine-mcp-server:latest"
-      ]
-    }
-  }
-}
-```
-
-**When to use Docker:**
-- Enterprise environments requiring container isolation
-- Reproducible deployments across different systems
-- Environments where Node.js installation is restricted
-
-Below are specific configuration methods for several MCP clients:
-
-#### Claude Desktop
-
-Add the following to `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "redmine": {
-      "command": "npx",
-      "args": ["-y", "@onozaty/redmine-mcp-server"],
-      "env": {
-        "REDMINE_URL": "https://your-redmine.example.com",
-        "REDMINE_API_KEY": "your-api-key-here",
-        "REDMINE_MCP_READ_ONLY": "true"
-      }
-    }
-  }
-}
-```
-
-#### Claude Code
-
-In Claude Code, you can add MCP servers using the following commands:
-
-Local configuration:
-```bash
-claude mcp add redmine -e REDMINE_URL=https://your-redmine.example.com -e REDMINE_API_KEY=your-api-key-here -e REDMINE_MCP_READ_ONLY=true -- npx -y @onozaty/redmine-mcp-server
-```
-
-Project configuration:
-```bash
-claude mcp add -s project redmine -e REDMINE_URL=https://your-redmine.example.com -e REDMINE_API_KEY=your-api-key-here -e REDMINE_MCP_READ_ONLY=true -- npx -y @onozaty/redmine-mcp-server
-```
-
-User configuration (global):
-```bash
-claude mcp add -s user redmine -e REDMINE_URL=https://your-redmine.example.com -e REDMINE_API_KEY=your-api-key-here -e REDMINE_MCP_READ_ONLY=true -- npx -y @onozaty/redmine-mcp-server
-```
-
-#### Visual Studio Code
-
-Project configuration (`.vscode/mcp.json`):
-
-```json
-{
-  "servers": {
-    "redmine": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@onozaty/redmine-mcp-server"],
-      "env": {
-        "REDMINE_URL": "https://your-redmine.example.com",
-        "REDMINE_API_KEY": "your-api-key-here",
-        "REDMINE_MCP_READ_ONLY": "true"
-      }
-    }
-  }
-}
-```
-
-User configuration (`settings.json`):
-
-```json
-{
-  "mcp": {
-    "servers": {
-      "redmine": {
-        "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@onozaty/redmine-mcp-server"],
-        "env": {
-          "REDMINE_URL": "https://your-redmine.example.com",
-          "REDMINE_API_KEY": "your-api-key-here",
-          "REDMINE_MCP_READ_ONLY": "true"
-        }
-      }
-    }
-  }
-}
-```
-
-## Available Features
-
-This MCP server comprehensively supports the functions provided by [Redmine's REST API](https://www.redmine.org/projects/redmine/wiki/rest_api):
-
-### Main Features
-
-- **Issues**: Create, update, delete, search, and manage related issues
-- **Projects**: Create, update, delete, archive, and manage memberships
-- **Users**: Create, update, delete, and manage groups
-- **Time Entries**: Record, update, and delete time entries
-- **Wiki**: Create, update, delete pages, and manage versions
-- **News**: Create, update, and delete news
-- **Files**: Upload and download files
-- **Attachments**: Upload, download files, and get thumbnails
-- **Queries**: Execute saved queries
-- **Custom Fields**: Get and manage custom fields
-- **Roles**: Get and manage roles
-- **Trackers**: Get and manage trackers
-- **Issue Statuses**: Get and manage issue statuses
-- **Search**: Cross-search functionality
-
-### Read-Only Mode
-
-By setting `REDMINE_MCP_READ_ONLY=true`, you can disable data modification operations. This allows safe data reference.
-
-### Tool Filtering
-
-You can control which tools are available using the following environment variables:
-
-- **`REDMINE_MCP_TOOLS_ALLOW_PATTERN`**: Only tools whose names match this regex are enabled.
-  - Example: `^get` enables only read-oriented tools like `getIssues`, `getProjects`, etc.
-- **`REDMINE_MCP_TOOLS_DENY_PATTERN`**: Tools whose names match this regex are disabled.
-  - Example: `^delete` disables all delete operations.
-
-When both are set, deny takes priority. These can also be combined with `REDMINE_MCP_READ_ONLY`.
-
-**Example: Allow only issue-related tools**
-```json
-"env": {
-  "REDMINE_MCP_TOOLS_ALLOW_PATTERN": "Issue"
-}
-```
-
-**Example: Disable all delete and archive operations**
-```json
-"env": {
-  "REDMINE_MCP_TOOLS_DENY_PATTERN": "^(delete|archive)"
-}
-```
-
-### Tool Annotations
-
-Every tool declares the `readOnlyHint` annotation, so clients do not have to guess from the tool name whether a call modifies data: it is `true` for read operations (`getIssues`, `getProjects`, ...) and `false` for the ones that create, update or delete. Clients that honour the annotation can, for instance, run read operations without asking the user for confirmation.
-
-### Available Tools
-
-The following tools are available (based on [Redmine REST API](https://www.redmine.org/projects/redmine/wiki/rest_api) categories):
-
-| Category | Tools |
+| 변수 | 용도 |
 |---|---|
-| Issues | getIssues, getIssue, createIssue, updateIssue, deleteIssue, addWatcher, removeWatcher, addRelatedIssue, removeRelatedIssue |
-| Projects | getProjects, getProject, createProject, updateProject, deleteProject, archiveProject, unarchiveProject, closeProject, reopenProject |
-| Project Memberships | getMemberships, getMembership, createMembership, updateMembership, deleteMembership |
-| Users | getUsers, getUser, createUser, updateUser, deleteUser, getCurrentUser |
-| Time Entries | getTimeEntries, getTimeEntry, createTimeEntry, updateTimeEntry, deleteTimeEntry |
-| News | getNewsList, getNewsListByProject, getNews, createNews, updateNews, deleteNews |
-| Issue Relations | getIssueRelations, getIssueRelation, createIssueRelation, deleteIssueRelation |
-| Versions | getVersionsByProject, getVersions, createVersion, updateVersion, deleteVersion |
-| Wiki Pages | getWikiPages, getWikiPage, getWikiPageByVersion, updateWikiPage, deleteWikiPage |
-| Queries | getQueries |
-| Attachments | getAttachment, updateAttachment, deleteAttachment, uploadAttachmentFromLocalFile, uploadAttachmentFromBase64Content, downloadAttachmentToLocalFile, downloadAttachmentAsBase64Content, downloadThumbnailToLocalFile, downloadThumbnailAsBase64Content |
-| Issue Statuses | getIssueStatuses |
-| Trackers | getTrackers |
-| Enumerations | getIssuePriorities, getTimeEntryActivities, getDocumentCategories |
-| Issue Categories | getIssueCategories, getIssueCategory, createIssueCategory, updateIssueCategory, deleteIssueCategory |
-| Roles | getRoles, getRole |
-| Groups | getGroups, getGroup, createGroup, updateGroup, deleteGroup, addUserToGroup, removeUserFromGroup |
-| Custom Fields | getCustomFields |
-| Search | search |
-| Files | getFiles, createFile |
-| My Account | getMyAccount, updateMyAccount |
-| Journals | updateJournal |
+| REDMINE_URL | 필수. Redmine 기본 URL |
+| REDMINE_API_KEY | 필수. 사용할 계정의 API 키 |
+| REDMINE_MCP_READ_ONLY | true이면 쓰기 도구 제외. 기본은 쓰기 허용 |
+| REDMINE_MCP_TOOLS_ALLOW_PATTERN | 허용할 도구 이름의 정규식. 생략하면 제한 없음 |
+| REDMINE_MCP_TOOLS_DENY_PATTERN | 제외할 도구 이름의 정규식. 허용 패턴보다 우선 |
 
-## License
+읽기 전용 설정과 도구 필터를 함께 적용할 수 있습니다. 인증정보는 MCP 클라이언트에서 관리합니다.
 
-MIT License
+## 주요 기능과 코드 구조
 
-## Author
+일감·프로젝트·사용자·시간 기록·위키 등 Redmine API 도구와 첨부 업로드·다운로드 도구를 제공합니다.
+각 도구는 readOnlyHint를 제공하며, src/server.ts에서 등록과 필터를 적용합니다.
 
-[onozaty](https://github.com/onozaty)
+- redmine-openapi.yaml → orval.config.ts → 자동 생성 코드 → post-generate.js 순서로 API 코드를 생성합니다.
+- src/issue/update-issue-handler.ts: 시간 기록을 포함한 일감 수정과 HTTP 오류 처리.
+- src/attachment/, src/schemas/attachment.ts, src/types/attachment.ts: 첨부 처리 구현·스키마·타입.
+- src/config.ts: 환경 변수와 도구 필터.
+- src/api/custom-fetch.ts: Redmine HTTP 요청.
+- test/update-issue.test.mjs: 빌드된 MCP와 모의 서버 사이의 통합 테스트.
 
-## Acknowledgments
+자동 생성 코드와 dist를 직접 수정하지 않고 스키마 또는 원본 소스를 수정한 뒤 빌드합니다.
 
-- OpenAPI specification: [d-yoshi/redmine-openapi](https://github.com/d-yoshi/redmine-openapi)
-- Code generation: [Orval](https://orval.dev/) - TypeScript client and schema generator from OpenAPI
+## 라이선스와 출처
+
+MIT 라이선스. 원저작자 onozaty의 저작권 고지는 LICENSE에 유지합니다.
+원본 프로젝트: https://github.com/onozaty/redmine-mcp-server
+OpenAPI 원본: https://github.com/d-yoshi/redmine-openapi
+코드 생성 도구: https://orval.dev/
