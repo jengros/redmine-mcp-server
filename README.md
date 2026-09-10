@@ -1,6 +1,6 @@
-# jengros Redmine MCP fork
+# jengros Redmine MCP
 
-개인 유지보수 저장소: https://github.com/jengros/redmine-mcp-server
+독립 유지보수 저장소: https://github.com/jengros/redmine-mcp-server
 
 원본: [onozaty/redmine-mcp-server](https://github.com/onozaty/redmine-mcp-server).
 원본 저작권 및 MIT 라이선스를 유지합니다. npm에 게시된 원본 패키지는 변경하지 않습니다.
@@ -34,7 +34,7 @@ Redmine의 일감 수정 컨트롤러가 최상위 `time_entry`를 처리하는 
 HTTP 오류는 MCP 오류로 반환하며 응답 유실 시 쓰기를 자동 재시도하지 않습니다.
 응답 유실 시 실제 저장 여부를 먼저 확인해 중복 댓글·시간 기록을 방지합니다.
 
-## 이 포크 빌드 및 실행
+## 이 수정본 빌드 및 실행
 
 Node.js 22 이상과 저장소에 지정된 pnpm 10.20.0을 사용합니다.
 Windows에서도 같은 명령으로 빌드할 수 있습니다.
@@ -48,7 +48,7 @@ npm test
 MCP 연결에서 `command`는 `node`, `args`는 빌드한 `dist/server.mjs`의 절대 경로로 지정합니다.
 기존 환경 변수 `REDMINE_URL`, `REDMINE_API_KEY`와 읽기/쓰기 설정은 유지합니다.
 실제 인증키·서버 정보는 저장소에 넣지 않습니다.
-아래 원본 README의 `npx @onozaty/...` 명령은 원본 패키지를 실행하므로 이 포크의 변경은 포함하지 않습니다.
+아래 원본 README의 `npx @onozaty/...` 명령은 원본 패키지를 실행하므로 이 수정본의 변경은 포함하지 않습니다.
 GitHub에서 소스만 받은 상태로 `npx github:...`를 실행하는 방식은 지원하지 않습니다. 먼저 위 명령으로 빌드합니다.
 
 ## 유지보수와 검증
@@ -56,7 +56,7 @@ GitHub에서 소스만 받은 상태로 `npx github:...`를 실행하는 방식�
 - `origin`: 이 개인 저장소, `upstream`: 원본 저장소로 관리합니다.
 - API 변경은 `redmine-openapi.yaml`에서 수정합니다. `src/__generated__`와 `dist`는 빌드 결과이므로 직접 관리하지 않습니다.
 - 원본 변경을 가져올 때 스키마·커스텀 핸들러·빌드 스크립트의 차이를 보존하고 빌드/테스트 후 반영합니다.
-- CI는 Windows와 Linux에서 빌드 및 테스트합니다. npm 자동 발행은 이 포크에서 비활성화되어 있습니다.
+- CI는 Windows와 Linux에서 빌드 및 테스트합니다. npm 자동 발행은 이 수정본에서 비활성화되어 있습니다.
 - 테스트는 빌드된 MCP와 로컬 모의 HTTP 서버 사이에서 수행하며 실제 Redmine/인증키를 사용하지 않습니다.
 - 단일 PUT, 댓글 전용 호출, 최소 시간 입력, 잘못된 입력, HTTP 오류, 응답 유실, 읽기 전용/도구 필터를 검증합니다.
 - 실제 Redmine 서버에서의 통합 저장과 조회 검증은 별도로 필요합니다.
