@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@10.20.0",
   "bin": {
-    "redmine-mcp-server": "./dist/server.mjs"
+    "redmine-mcp-server": "dist/server.mjs"
   },
   "files": [
     "dist/**/*"
