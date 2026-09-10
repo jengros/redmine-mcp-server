@@ -12,6 +12,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import packageJson from "../package.json" assert { type: "json" };
 
 import { config } from "./config.js";
+import { updateIssueHandler } from "./issue/update-issue-handler.js";
 
 // Tool classification enum
 enum ToolType {
@@ -95,7 +96,6 @@ import {
   updateAttachmentHandler,
   updateGroupHandler,
   updateIssueCategoryHandler,
-  updateIssueHandler,
   updateJournalHandler,
   updateMembershipHandler,
   updateMyAccountHandler,
@@ -356,7 +356,7 @@ registerTool(
 );
 registerTool(
   "updateIssue",
-  "Update issue",
+  "Update issue; optionally save time_entry with notes, status and assignee in one request. Verify both issue and time entry after saving.",
   ToolType.WRITE,
   { pathParams: updateIssueParams, bodyParams: updateIssueBody },
   updateIssueHandler

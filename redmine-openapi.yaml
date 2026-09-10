@@ -571,6 +571,29 @@ paths:
                       type: string
                     uploads:
                       $ref: "#/components/schemas/uploads"
+                time_entry:
+                  description: >-
+                    Optional time entry saved with this issue update in one request.
+                    Requires log-time permission and a server supporting this payload.
+                    Verify the time entry after saving; do not blindly retry on timeout.
+                  type: object
+                  required:
+                    - hours
+                  properties:
+                    hours:
+                      type: number
+                      minimum: 0
+                    activity_id:
+                      type: integer
+                    spent_on:
+                      type: string
+                      format: date
+                    comments:
+                      type: string
+                    custom_fields:
+                      $ref: "#/components/schemas/custom_fields"
+                    custom_field_values:
+                      $ref: "#/components/schemas/custom_field_values"
       responses:
         "204":
           description: ""

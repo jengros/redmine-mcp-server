@@ -8,6 +8,7 @@ on:
 jobs:
   # Job 1: Validate version
   validate:
+    if: github.repository == 'onozaty/redmine-mcp-server'
     name: Validate Release
     runs-on: ubuntu-latest
     outputs:
