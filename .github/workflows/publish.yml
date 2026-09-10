@@ -1,178 +1,53 @@
-name: Publish Package
-
+name: Publish npm with OIDC
 on:
   push:
-    tags:
-      - 'v[0-9]+\.[0-9]+\.[0-9]+'
-
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
 jobs:
-  # Job 1: Validate version
-  validate:
-    if: github.repository == 'onozaty/redmine-mcp-server'
-    name: Validate Release
+  publish:
+    if: github.repository == 'jengros/redmine-mcp-server' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.get-version.outputs.version }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Extract version from tag
-        id: get-version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-
-      - name: Verify package.json version matches tag
-        run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION="${{ steps.get-version.outputs.version }}"
-          echo "package.json version: $PKG_VERSION"
-          echo "Git tag version: $TAG_VERSION"
-          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
-            echo "❌ Version mismatch!"
-            exit 1
-          fi
-          echo "✅ Versions match"
-
-  # Job 2: Build package
-  build:
-    name: Build Package
-    runs-on: ubuntu-latest
-    needs: validate
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-          cache: "pnpm"
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build package
-        run: pnpm run build
-
-      - name: Verify build output
-        run: |
-          if [ ! -f "dist/server.mjs" ]; then
-            echo "❌ Build failed: dist/server.mjs not found"
-            exit 1
-          fi
-          echo "✅ Build output verified"
-          ls -lh dist/
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v5
-        with:
-          name: dist
-          path: dist/
-          retention-days: 7
-
-  # Job 3: Publish to npm
-  publish-npm:
-    name: Publish to npm
-    runs-on: ubuntu-latest
-    needs: build
+    timeout-minutes: 15
     permissions:
       contents: read
-      id-token: write # For npm provenance
-
+      id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v5
+      - uses: actions/checkout@v5
         with:
-          name: dist
-          path: dist/
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
-
-      # npm >= 11.5.1 is required for trusted publishing (OIDC); the npm
-      # bundled with Node 22 is 10.x and cannot exchange the id-token.
-      - name: Update npm
-        run: npm install -g npm@latest
-
-      - name: Publish to npm
-        run: npm publish --provenance --access public
-
-  # Job 4: Publish to GHCR
-  publish-docker:
-    name: Publish to GHCR
-    runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            type=raw,value=latest
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # Job 5: Create GitHub Release
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    needs: [publish-npm, publish-docker]
-    permissions:
-      contents: write
-
-    steps:
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
+          node-version: '22'
+          package-manager-cache: false
+      - name: Install OIDC-capable npm
+        run: npm install --global npm@11.17.0
+      - name: Validate release identity
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const p = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          assert.equal(p.name, '@jengros/redmine-mcp-server');
+          assert.match(p.version, /^\d+\.\d+\.\d+$/);
+          assert.equal(process.env.GITHUB_REF_NAME, `v${p.version}`);
+          assert.equal(p.repository.url, 'git+https://github.com/jengros/redmine-mcp-server.git');
+          assert.equal(p.publishConfig.access, 'public');
+          assert.equal(p.publishConfig.registry, 'https://registry.npmjs.org/');
+          assert.notEqual(p.private, true);
+          NODE
+      - run: pnpm install --frozen-lockfile
+      # prepublishOnly builds and tests; failure prevents publication.
+      - name: Publish with GitHub OIDC
+        run: npm publish --access public --provenance --registry=https://registry.npmjs.org
+      - name: Verify published version
+        shell: bash
+        run: |
+          PACKAGE=$(node -p "const p=require('./package.json'); p.name+'@'+p.version")
+          npm view "$PACKAGE" name version bin dist.attestations --json --registry=https://registry.npmjs.org
