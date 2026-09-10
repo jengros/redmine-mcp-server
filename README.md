@@ -64,7 +64,15 @@ GitHub에서 소스만 받은 상태로 `npx github:...`를 실행하는 방식�
 
 ## npm 배포: GitHub Actions OIDC
 
-npm 패키지 Settings → Trusted Publisher에 다음 값을 등록합니다.
+npm 11.15.0 이상에서 로그인 후 다음 명령으로 신뢰 연결을 등록하고 조회할 수 있습니다.
+계정 2FA와 패키지 쓰기 권한이 필요합니다.
+
+```sh
+npm trust github @jengros/redmine-mcp-server --file=publish.yml --repo=jengros/redmine-mcp-server --allow-publish --yes
+npm trust list @jengros/redmine-mcp-server
+```
+
+웹에서 등록하려면 npm 패키지 Settings → Trusted Publisher에 다음 값을 사용합니다.
 
 - Provider: GitHub Actions
 - Organization or user: jengros
