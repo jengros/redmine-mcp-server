@@ -39,10 +39,10 @@ HTTP 오류는 MCP 오류로 반환하며 응답 유실 시 쓰기를 자동 재
 배포된 버전은 다음 명령으로 실행합니다.
 
 ```sh
-npx -y @jengros/redmine-mcp-server@1.3.1
+npx -y @jengros/redmine-mcp-server@1.3.2
 ```
 
-MCP 설정은 command를 npx, args를 ["-y", "@jengros/redmine-mcp-server@1.3.1"]로 지정합니다.
+MCP 설정은 command를 npx, args를 ["-y", "@jengros/redmine-mcp-server@1.3.2"]로 지정합니다.
 기존 환경 변수와 인증정보는 유지합니다. 버전을 고정하며 업데이트 시 검증한 버전으로 변경합니다.
 
 ## 이 수정본 빌드 및 실행
@@ -85,7 +85,7 @@ npm trust list @jengros/redmine-mcp-server
 패키지가 아직 없으면 최초 등록을 완료한 뒤 패키지 설정에서 신뢰 관계를 등록합니다.
 공식 절차: https://docs.npmjs.com/trusted-publishers/
 
-package.json 버전과 같은 v태그(예: v1.3.1)를 올리면 배포합니다.
+package.json 버전과 같은 v태그(예: v1.3.2)를 올리면 배포합니다.
 워크플로는 저장소·태그·패키지 이름을 검사하고 고정된 의존성을 설치한 뒤 빌드와 테스트를 통과해야 배포합니다.
 GitHub 호스팅 Ubuntu, Node 22, npm 11.17.0과 id-token: write 권한을 사용합니다.
 수동 재실행도 해당 버전 태그를 선택해야 합니다. main에서 실행하면 배포 작업을 건너뜁니다.
