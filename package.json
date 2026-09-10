@@ -13,7 +13,8 @@
   "scripts": {
     "gen": "node scripts/clean-generated.mjs && orval && node post-generate.js",
     "build": "npm run gen && tsdown",
-    "test": "node --test test/update-issue.test.mjs"
+    "test": "node --test test/update-issue.test.mjs",
+    "prepublishOnly": "npm run build && npm test"
   },
   "repository": {
     "type": "git",
@@ -40,5 +41,8 @@
     "@modelcontextprotocol/sdk": "1.15.0",
     "zod": "^3.25.75"
   },
-  "private": true
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }
